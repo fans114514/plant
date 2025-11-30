@@ -3,81 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Solar System 3D | 宇宙探索</title>
+    <title>3D Solar System Explorer</title>
     <link rel="stylesheet" href="style.css">
-    <!-- 引入 GSAP 动画库 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- 引入 Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- 引入 轨道控制器 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- 引入 动画补间库 Tween.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
 </head>
 <body>
 
-    <!-- 顶部栏 -->
-    <div id="top-bar">
-        <div id="clock">12:00</div>
-        <div class="controls">
-            <button id="lang-btn">EN / 中</button>
-            <button id="toggle-search-btn" title="Toggle Search">🔍</button>
-        </div>
+    <!-- 3D 渲染容器 -->
+    <div id="canvas-container"></div>
+
+    <!-- 顶部 UI：时间与语言 -->
+    <div class="top-bar">
+        <div id="clock">00:00:00</div>
+        <button id="lang-btn" class="glass-btn">EN / 中</button>
+        <button id="toggle-search-btn" class="glass-btn">🔍</button>
     </div>
 
     <!-- 居中搜索框 -->
-    <div id="search-container">
-        <div class="search-glass">
-            <form id="search-form" action="https://www.bing.com/search" method="get" target="_blank">
-                <input type="text" name="q" id="search-input" placeholder="Search the universe..." autocomplete="off">
-            </form>
-        </div>
+    <div id="search-container" class="glass-panel centered">
+        <input type="text" id="search-input" placeholder="Search Bing...">
     </div>
 
-    <!-- 3D 画布 -->
-    <canvas id="webgl-canvas"></canvas>
-
-    <!-- 右侧详情面板 (毛玻璃) -->
-    <div id="info-panel" class="hidden">
-        <button id="close-panel">×</button>
-        <div class="panel-content">
-            <div class="planet-header">
-                <h1 id="planet-name">Earth</h1>
-                <div class="planet-decoration"></div>
-            </div>
-            
-            <p id="planet-desc">Description text...</p>
+    <!-- 右侧信息面板 (默认隐藏) -->
+    <div id="info-panel" class="glass-panel side-panel hidden">
+        <button id="close-info-btn">×</button>
+        <div class="content">
+            <h1 id="planet-name">Earth</h1>
+            <div class="planet-img-placeholder" id="planet-img-view"></div>
+            <p id="planet-desc" class="desc">The third planet from the Sun...</p>
             
             <div class="data-grid">
                 <div class="data-item">
                     <span class="label" data-key="radius">Radius</span>
-                    <span class="value" id="val-radius">-</span>
+                    <span class="value" id="val-radius">6371 km</span>
                 </div>
                 <div class="data-item">
-                    <span class="label" data-key="temp">Temp</span>
-                    <span class="value" id="val-temp">-</span>
+                    <span class="label" data-key="temp">Avg Temp</span>
+                    <span class="value" id="val-temp">15°C</span>
                 </div>
                 <div class="data-item">
-                    <span class="label" data-key="orbit">Orbit</span>
-                    <span class="value" id="val-orbit">-</span>
+                    <span class="label" data-key="orbit">Orbit Period</span>
+                    <span class="value" id="val-orbit">365 days</span>
                 </div>
             </div>
 
-            <a id="wiki-link" href="#" target="_blank" class="wiki-btn">
-                <span data-key="wiki">View Wikipedia</span> ↗
-            </a>
+            <a id="wiki-btn" href="#" target="_blank" class="action-btn">Wiki</a>
         </div>
     </div>
 
-    <!-- 加载与提示 -->
-    <div id="loader">
-        <div class="spinner"></div>
-        <div class="loading-text">Loading Solar System...</div>
+    <!-- 提示层 -->
+    <div id="loading-overlay">
+        <div class="loader">Loading Solar System...</div>
     </div>
 
-    <!-- Import Map 引入 Three.js -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
-    <script type="module" src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
