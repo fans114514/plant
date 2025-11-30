@@ -1,8 +1,9 @@
 :root {
-    --glass-bg: rgba(20, 20, 35, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --text-color: #ffffff;
-    --accent-color: #4da6ff;
+    --glass-bg: rgba(15, 15, 25, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --accent: #4da6ff;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -10,8 +11,8 @@
 body {
     overflow: hidden;
     background-color: #000;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    color: var(--text-color);
+    font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-primary);
 }
 
 #webgl-canvas {
@@ -19,6 +20,7 @@ body {
     top: 0; left: 0;
     width: 100vw; height: 100vh;
     z-index: 1;
+    display: block;
 }
 
 /* --- UI Layers (z-index > 1) --- */
@@ -27,31 +29,41 @@ body {
 #top-bar {
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 60px;
+    height: 70px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
+    padding: 0 30px;
     z-index: 10;
-    pointer-events: none; /* Let clicks pass through to canvas */
+    pointer-events: none;
 }
 
-#top-bar > * { pointer-events: auto; } /* Re-enable pointer events for buttons */
+#top-bar > * { pointer-events: auto; }
 
-#clock { font-size: 1.2rem; font-weight: 300; opacity: 0.8; }
+#clock { 
+    font-size: 1.1rem; 
+    font-weight: 300; 
+    letter-spacing: 1px;
+    opacity: 0.8; 
+    text-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
 
 .controls button {
-    background: var(--glass-bg);
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
     color: white;
-    padding: 5px 15px;
+    padding: 8px 16px;
     border-radius: 20px;
     cursor: pointer;
     backdrop-filter: blur(10px);
-    transition: background 0.3s;
+    transition: all 0.3s;
     margin-left: 10px;
+    font-size: 0.9rem;
 }
-.controls button:hover { background: rgba(255,255,255,0.2); }
+.controls button:hover { 
+    background: rgba(255,255,255,0.15); 
+    border-color: rgba(255,255,255,0.3);
+}
 
 /* Search Box */
 #search-container {
@@ -62,50 +74,62 @@ body {
     z-index: 10;
     width: 90%;
     max-width: 500px;
-    transition: opacity 0.5s, transform 0.5s;
+    transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 #search-container.hidden {
     opacity: 0;
-    transform: translateX(-50%) translateY(-20px);
+    transform: translateX(-50%) translateY(-30px) scale(0.95);
     pointer-events: none;
+}
+
+.search-glass {
+    position: relative;
+    border-radius: 50px;
+    padding: 2px; /* Border gradient placeholder */
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.01));
 }
 
 #search-input {
     width: 100%;
-    padding: 12px 20px;
-    border-radius: 30px;
+    padding: 15px 25px;
+    border-radius: 50px;
     border: 1px solid var(--glass-border);
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     color: white;
     font-size: 1.1rem;
     text-align: center;
     outline: none;
-    transition: background 0.3s;
+    transition: background 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
-#search-input:focus { background: rgba(255, 255, 255, 0.2); }
-#search-input::placeholder { color: rgba(255,255,255,0.6); }
 
-/* Info Panel (Glassmorphism) */
+#search-input:focus { 
+    background: rgba(0, 0, 0, 0.5); 
+    box-shadow: 0 0 15px rgba(77, 166, 255, 0.2);
+    border-color: rgba(77, 166, 255, 0.3);
+}
+#search-input::placeholder { color: rgba(255,255,255,0.4); }
+
+/* Info Panel */
 #info-panel {
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 350px;
-    height: 100vh;
-    background: rgba(10, 10, 15, 0.65);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    top: 0; right: 0; bottom: 0;
+    width: 400px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
     border-left: 1px solid var(--glass-border);
     z-index: 20;
-    padding: 80px 30px 30px 30px;
+    padding: 80px 40px;
     transform: translateX(0);
-    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    box-shadow: -10px 0 50px rgba(0,0,0,0.5);
 }
 
 #info-panel.hidden {
@@ -114,95 +138,134 @@ body {
 
 #close-panel {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    background: none;
+    top: 25px;
+    right: 25px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
     border: none;
     color: white;
-    font-size: 2rem;
+    font-size: 1.5rem;
     cursor: pointer;
-    opacity: 0.7;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-#close-panel:hover { opacity: 1; }
+#close-panel:hover { background: rgba(255,255,255,0.2); }
 
-.panel-content h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-    background: linear-gradient(45deg, #fff, #aaa);
+.planet-header {
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+}
+
+#planet-name {
+    font-size: 3rem;
+    font-weight: 200;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #fff, #aaa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
-.planet-img-placeholder {
-    width: 100%;
-    height: 150px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 10px;
-    margin-bottom: 20px;
-    /* In a real app, use background-image here */
-}
-
 #planet-desc {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: rgba(255,255,255,0.8);
-    margin-bottom: 30px;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+    font-weight: 300;
 }
 
 .data-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 30px;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 40px;
 }
 
 .data-item {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
 }
 
-.data-item .label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-.data-item .value { font-size: 1.1rem; font-weight: 500; }
+.data-item .label { 
+    font-size: 0.8rem; 
+    color: #888; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+.data-item .value { 
+    font-size: 1.1rem; 
+    font-weight: 500; 
+    color: var(--accent);
+}
 
 .wiki-btn {
     display: block;
     text-align: center;
-    background: var(--accent-color);
+    background: var(--accent);
     color: white;
     text-decoration: none;
-    padding: 12px;
-    border-radius: 8px;
-    font-weight: bold;
-    transition: filter 0.3s;
+    padding: 15px;
+    border-radius: 50px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: all 0.3s;
+    box-shadow: 0 5px 20px rgba(77, 166, 255, 0.3);
 }
-.wiki-btn:hover { filter: brightness(1.2); }
+.wiki-btn:hover { 
+    background: #3a8fd6; 
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(77, 166, 255, 0.4);
+}
 
+/* Loader */
 #loader {
     position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 1.5rem;
-    pointer-events: none;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     z-index: 50;
-    transition: opacity 0.5s;
+    transition: opacity 0.8s;
 }
+.spinner {
+    width: 40px; height: 40px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+.loading-text { font-size: 0.9rem; letter-spacing: 2px; color: #666; }
 
-/* Mobile Adjustments */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Mobile */
 @media (max-width: 768px) {
     #info-panel {
         width: 100%;
-        height: 50vh;
+        height: 55vh;
         top: auto;
         bottom: 0;
         border-left: none;
         border-top: 1px solid var(--glass-border);
         transform: translateY(0);
-        padding: 40px 20px 20px 20px;
+        padding: 30px 20px;
+        border-radius: 20px 20px 0 0;
     }
     #info-panel.hidden {
         transform: translateY(100%);
     }
-    
-    #search-container { top: 12%; }
+    #planet-name { font-size: 2.2rem; }
+    .data-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .data-item { flex-direction: column; align-items: flex-start; }
+    #search-container { top: 18%; }
 }

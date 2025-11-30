@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D Solar System Explorer</title>
+    <title>Solar System 3D | 宇宙探索</title>
     <link rel="stylesheet" href="style.css">
-    <!-- 引入 GSAP 用于平滑动画 -->
+    <!-- 引入 GSAP 动画库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
 
-    <!-- 顶部栏：时间与设置 -->
+    <!-- 顶部栏 -->
     <div id="top-bar">
         <div id="clock">12:00</div>
         <div class="controls">
@@ -19,23 +19,28 @@
         </div>
     </div>
 
-    <!-- 中间搜索框 -->
+    <!-- 居中搜索框 -->
     <div id="search-container">
-        <form id="search-form" action="https://www.bing.com/search" method="get" target="_blank">
-            <input type="text" name="q" id="search-input" placeholder="Search the universe..." autocomplete="off">
-        </form>
+        <div class="search-glass">
+            <form id="search-form" action="https://www.bing.com/search" method="get" target="_blank">
+                <input type="text" name="q" id="search-input" placeholder="Search the universe..." autocomplete="off">
+            </form>
+        </div>
     </div>
 
-    <!-- 3D 渲染容器 -->
+    <!-- 3D 画布 -->
     <canvas id="webgl-canvas"></canvas>
 
-    <!-- 右侧信息面板（毛玻璃） -->
+    <!-- 右侧详情面板 (毛玻璃) -->
     <div id="info-panel" class="hidden">
         <button id="close-panel">×</button>
         <div class="panel-content">
-            <h1 id="planet-name">Planet</h1>
-            <div class="planet-img-placeholder" id="planet-img-preview"></div>
-            <p id="planet-desc">Description goes here.</p>
+            <div class="planet-header">
+                <h1 id="planet-name">Earth</h1>
+                <div class="planet-decoration"></div>
+            </div>
+            
+            <p id="planet-desc">Description text...</p>
             
             <div class="data-grid">
                 <div class="data-item">
@@ -52,14 +57,19 @@
                 </div>
             </div>
 
-            <a id="wiki-link" href="#" target="_blank" class="wiki-btn">Wiki</a>
+            <a id="wiki-link" href="#" target="_blank" class="wiki-btn">
+                <span data-key="wiki">View Wikipedia</span> ↗
+            </a>
         </div>
     </div>
 
-    <!-- 加载提示 -->
-    <div id="loader">Loading Solar System...</div>
+    <!-- 加载与提示 -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading Solar System...</div>
+    </div>
 
-    <!-- 引入 Three.js (使用 Module 方式) -->
+    <!-- Import Map 引入 Three.js -->
     <script type="importmap">
         {
             "imports": {
