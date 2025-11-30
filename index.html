@@ -5,60 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>3D Solar System Explorer</title>
     <link rel="stylesheet" href="style.css">
-    <!-- 引入 Three.js -->
+    <!-- 引入 Three.js 和 OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- 引入 轨道控制器 -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <!-- 引入 动画补间库 Tween.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <!-- 引入 GSAP 用于平滑动画 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
 </head>
 <body>
+
+    <!-- 顶部栏：语言与时间 -->
+    <div id="top-bar">
+        <div class="time-display" id="clock">12:00</div>
+        <button id="lang-btn">EN / 中</button>
+    </div>
+
+    <!-- 居中搜索框 -->
+    <div id="search-container">
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Bing Search...">
+            <button id="search-btn">🔍</button>
+        </div>
+        <div class="toggle-search" id="hide-search-btn" title="Toggle Search">👁️</div>
+    </div>
 
     <!-- 3D 渲染容器 -->
     <div id="canvas-container"></div>
 
-    <!-- 顶部 UI：时间与语言 -->
-    <div class="top-bar">
-        <div id="clock">00:00:00</div>
-        <button id="lang-btn" class="glass-btn">EN / 中</button>
-        <button id="toggle-search-btn" class="glass-btn">🔍</button>
-    </div>
-
-    <!-- 居中搜索框 -->
-    <div id="search-container" class="glass-panel centered">
-        <input type="text" id="search-input" placeholder="Search Bing...">
-    </div>
-
-    <!-- 右侧信息面板 (默认隐藏) -->
-    <div id="info-panel" class="glass-panel side-panel hidden">
-        <button id="close-info-btn">×</button>
-        <div class="content">
+    <!-- 右侧行星信息面板 (毛玻璃) -->
+    <div id="info-panel" class="hidden">
+        <button id="close-panel">×</button>
+        <div class="panel-content">
             <h1 id="planet-name">Earth</h1>
-            <div class="planet-img-placeholder" id="planet-img-view"></div>
-            <p id="planet-desc" class="desc">The third planet from the Sun...</p>
-            
+            <div class="planet-preview" id="planet-img-placeholder"></div>
+            <p id="planet-desc">The third planet from the Sun...</p>
             <div class="data-grid">
                 <div class="data-item">
                     <span class="label" data-key="radius">Radius</span>
                     <span class="value" id="val-radius">6371 km</span>
                 </div>
                 <div class="data-item">
-                    <span class="label" data-key="temp">Avg Temp</span>
+                    <span class="label" data-key="temp">Temp</span>
                     <span class="value" id="val-temp">15°C</span>
                 </div>
                 <div class="data-item">
-                    <span class="label" data-key="orbit">Orbit Period</span>
+                    <span class="label" data-key="orbit">Orbit</span>
                     <span class="value" id="val-orbit">365 days</span>
                 </div>
             </div>
-
-            <a id="wiki-btn" href="#" target="_blank" class="action-btn">Wiki</a>
+            <a href="#" target="_blank" id="wiki-btn" class="wiki-button">View Wikipedia</a>
         </div>
     </div>
 
-    <!-- 提示层 -->
-    <div id="loading-overlay">
-        <div class="loader">Loading Solar System...</div>
+    <!-- 底部版权/提示 -->
+    <div id="footer-tip">
+        <span data-key="tip">Double click to focus / Drag to rotate</span>
     </div>
 
     <script src="script.js"></script>

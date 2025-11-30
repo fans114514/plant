@@ -1,505 +1,406 @@
-/**
- * 3D Solar System Configuration & Logic
- */
-
-// ================= 1. 数据配置 (Data Config) =================
-const SYSTEM_CONFIG = {
-    lang: 'zh', // 'zh' or 'en'
-    rotateSpeedBase: 0.5,
-    textureQuality: 'high' // 'high' or 'low'
+// =================配置与数据=================
+const CONFIG = {
+    cameraZ: 150,
+    orbitSpeedMultiplier: 0.2, // 全局速度控制
+    focusOffset: { x: 10, y: 5, z: 15 }, // 聚焦时相机的相对偏移
+    mobileFocusOffset: { x: 0, y: 15, z: 25 }
 };
 
-const TEXTS = {
-    zh: {
-        radius: "半径", temp: "平均温度", orbit: "公转周期", wiki: "查看百科",
-        searchPlaceholder: "必应搜索...", loading: "正在加载星系资源...",
-        sun: "太阳", mercury: "水星", venus: "金星", earth: "地球", mars: "火星",
-        jupiter: "木星", saturn: "土星", uranus: "天王星", neptune: "海王星"
-    },
-    en: {
-        radius: "Radius", temp: "Avg Temp", orbit: "Orbit Period", wiki: "Wikipedia",
-        searchPlaceholder: "Search Bing...", loading: "Loading Solar System...",
-        sun: "Sun", mercury: "Mercury", venus: "Venus", earth: "Earth", mars: "Mars",
-        jupiter: "Jupiter", saturn: "Saturn", uranus: "Uranus", neptune: "Neptune"
-    }
+const TEXTURES = {
+    sun: 'https://upload.wikimedia.org/wikipedia/commons/9/99/Map_of_the_full_sun.jpg',
+    mercury: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Mercury_in_color_-_Prockter07_centered.jpg',
+    venus: 'https://upload.wikimedia.org/wikipedia/commons/e/e5/Venus-real_color.jpg',
+    earth: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Solarsystemscope_texture_2k_earth_daymap.jpg',
+    mars: 'https://upload.wikimedia.org/wikipedia/commons/0/02/OSIRIS_Mars_true_color.jpg',
+    jupiter: 'https://upload.wikimedia.org/wikipedia/commons/e/e2/Jupiter.jpg',
+    saturn: 'https://upload.wikimedia.org/wikipedia/commons/b/b4/Saturn_%28planet%29_large.jpg', // 简化：没有环的贴图，环程序化生成
+    uranus: 'https://upload.wikimedia.org/wikipedia/commons/3/3d/Uranus2.jpg',
+    neptune: 'https://upload.wikimedia.org/wikipedia/commons/5/56/Neptune_Full.jpg',
+    stars: 'https://upload.wikimedia.org/wikipedia/commons/8/80/Hyades.jpg' // 星空背景
 };
 
-// 行星数据 (模拟比例，非严格真实比例，为了视觉效果做了调整)
-const PLANETS = [
-    {
-        key: 'sun', color: 0xFFAA00, radius: 12, distance: 0, speed: 0,
-        temp: "5500°C", orbitPeriod: "-", type: 'star',
-        desc_zh: "太阳系的中心恒星，占太阳系总质量的99.86%。",
-        desc_en: "The star at the center of the Solar System.",
-        texture: "https://upload.wikimedia.org/wikipedia/commons/9/9b/Sun_texture.jpg" // 示例纹理
-    },
-    {
-        key: 'mercury', color: 0xA5A5A5, radius: 2, distance: 25, speed: 0.02,
-        temp: "167°C", orbitPeriod: "88 days",
-        desc_zh: "最小的行星，也是离太阳最近的行星。",
-        desc_en: "The smallest planet and closest to the Sun.",
-        texture: "https://upload.wikimedia.org/wikipedia/commons/3/30/Mercury_in_color_-_Prockter07_centered.jpg"
-    },
-    {
-        key: 'venus', color: 0xE3BB76, radius: 3.5, distance: 38, speed: 0.015,
-        temp: "464°C", orbitPeriod: "225 days",
-        desc_zh: "太阳系中最热的行星，有着厚厚的大气层。",
-        desc_en: "The hottest planet in the solar system with a thick atmosphere.",
-        texture: "https://upload.wikimedia.org/wikipedia/commons/e/e5/Venus-real_color.jpg"
-    },
-    {
-        key: 'earth', color: 0x2233FF, radius: 3.6, distance: 55, speed: 0.01,
-        temp: "15°C", orbitPeriod: "365 days",
-        desc_zh: "我们的家园，目前已知唯一孕育生命的星球。",
-        desc_en: "Our home, the only planet known to harbor life.",
-        texture: "https://upload.wikimedia.org/wikipedia/commons/c/cb/The_Blue_Marble_%28remastered%29.jpg"
-    },
-    {
-        key: 'mars', color: 0xFF4500, radius: 2.5, distance: 70, speed: 0.008,
-        temp: "-65°C", orbitPeriod: "687 days",
-        desc_zh: "红色星球，表面布满氧化铁。",
-        desc_en: "The Red Planet, dusty and cold.",
-        texture: "https://upload.wikimedia.org/wikipedia/commons/0/02/OSIRIS_Mars_true_color.jpg"
-    },
-    {
-        key: 'jupiter', color: 0xC88B3A, radius: 8, distance: 100, speed: 0.005,
-        temp: "-110°C", orbitPeriod: "12 years",
-        desc_zh: "巨大的气态巨行星，拥有标志性的大红斑。",
-        desc_en: "A gas giant and the largest planet in the solar system.",
-        texture: "https://upload.wikimedia.org/wikipedia/commons/e/e2/Jupiter.jpg"
-    },
-    {
-        key: 'saturn', color: 0xC5AB6E, radius: 7, distance: 140, speed: 0.003,
-        temp: "-140°C", orbitPeriod: "29 years", hasRing: true,
-        desc_zh: "以其美丽复杂的行星环系统而闻名。",
-        desc_en: "Famous for its prominent ring system.",
-        texture: "https://upload.wikimedia.org/wikipedia/commons/c/c7/Saturn_during_Equinox.jpg"
-    },
-    {
-        key: 'uranus', color: 0x4FD0E7, radius: 5, distance: 180, speed: 0.002,
-        temp: "-195°C", orbitPeriod: "84 years",
-        desc_zh: "冰巨星，其自转轴几乎与轨道平面平行（躺着转）。",
-        desc_en: "An ice giant that rotates on its side.",
-        texture: "https://upload.wikimedia.org/wikipedia/commons/3/3d/Uranus2.jpg"
-    },
-    {
-        key: 'neptune', color: 0x2E5D9C, radius: 4.8, distance: 210, speed: 0.0015,
-        temp: "-200°C", orbitPeriod: "165 years",
-        desc_zh: "太阳系最外层的行星，风暴猛烈。",
-        desc_en: "The most distant planet, known for supersonic winds.",
-        texture: "https://upload.wikimedia.org/wikipedia/commons/5/56/Neptune_Full.jpg"
-    }
+const PLANET_DATA = [
+    { name: "Mercury", nameCN: "水星", radius: 0.8, distance: 20, speed: 0.02, color: 0xAAAAAA, texture: TEXTURES.mercury, desc: "The smallest planet in the Solar System.", descCN: "太阳系中最小的行星，距离太阳最近。", realData: { r: "2,439 km", t: "167°C", o: "88 days" } },
+    { name: "Venus", nameCN: "金星", radius: 1.5, distance: 30, speed: 0.015, color: 0xE3BB76, texture: TEXTURES.venus, desc: "Second planet from the Sun. It's the hottest.", descCN: "距离太阳第二近的行星，也是最热的行星。", realData: { r: "6,051 km", t: "464°C", o: "225 days" } },
+    { name: "Earth", nameCN: "地球", radius: 1.6, distance: 45, speed: 0.01, color: 0x2233FF, texture: TEXTURES.earth, desc: "Our home, the only known planet with life.", descCN: "我们的家园，目前已知唯一孕育生命的星球。", realData: { r: "6,371 km", t: "15°C", o: "365 days" } },
+    { name: "Mars", nameCN: "火星", radius: 1.2, distance: 60, speed: 0.008, color: 0xFF4500, texture: TEXTURES.mars, desc: "The Red Planet, a dusty, cold, desert world.", descCN: "红色星球，一个寒冷、沙尘覆盖的沙漠世界。", realData: { r: "3,389 km", t: "-65°C", o: "687 days" } },
+    { name: "Jupiter", nameCN: "木星", radius: 3.5, distance: 85, speed: 0.005, color: 0xBCAB8C, texture: TEXTURES.jupiter, desc: "The largest planet in the Solar System.", descCN: "太阳系中体积最大的行星。", realData: { r: "69,911 km", t: "-110°C", o: "12 years" } },
+    { name: "Saturn", nameCN: "土星", radius: 3.0, distance: 110, speed: 0.004, color: 0xE6DBA0, texture: TEXTURES.saturn, hasRing: true, desc: "Adorned with a dazzling, complex system of icy rings.", descCN: "拥有复杂而耀眼的冰环系统。", realData: { r: "58,232 km", t: "-140°C", o: "29 years" } },
+    { name: "Uranus", nameCN: "天王星", radius: 2.2, distance: 135, speed: 0.003, color: 0x76D7EA, texture: TEXTURES.uranus, desc: "An ice giant that spins on its side.", descCN: "一颗躺着自转的冰巨星。", realData: { r: "25,362 km", t: "-195°C", o: "84 years" } },
+    { name: "Neptune", nameCN: "海王星", radius: 2.1, distance: 160, speed: 0.002, color: 0x4B70DD, texture: TEXTURES.neptune, desc: "The most distant major planet orbiting our Sun.", descCN: "距离太阳最远的行星，拥有猛烈的风暴。", realData: { r: "24,622 km", t: "-200°C", o: "165 years" } }
 ];
 
-// ================= 2. Three.js 初始化 (Initialization) =================
-const container = document.getElementById('canvas-container');
-const scene = new THREE.Scene();
+// =================全局变量=================
+let scene, camera, renderer, controls;
+let planets = []; // 存储行星网格对象
+let orbits = []; // 存储轨道线
+let sun;
+let isFocusing = false;
+let currentFocusPlanet = null;
+let lang = 'zh'; // 'zh' or 'en'
+let raycaster = new THREE.Raycaster();
+let mouse = new THREE.Vector2();
 
-// 相机设置
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
-camera.position.set(0, 80, 150); // 初始俯视角度
+// =================初始化系统=================
+function init() {
+    // 1. 场景
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x000000, 0.002); // 远景雾化，增加深邃感
 
-// 渲染器设置
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 性能优化
-container.appendChild(renderer.domElement);
+    // 2. 相机
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 60, CONFIG.cameraZ);
 
-// 控制器
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
-controls.maxDistance = 500;
-controls.minDistance = 20;
+    // 3. 渲染器
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 性能优化
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-// 星空背景 (程序化生成)
-function createStarfield() {
-    const geometry = new THREE.BufferGeometry();
-    const count = 3000;
-    const positions = new Float32Array(count * 3);
-    for(let i=0; i<count*3; i++) {
-        positions[i] = (Math.random() - 0.5) * 1000;
-    }
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const material = new THREE.PointsMaterial({ size: 1.5, color: 0xFFFFFF, transparent: true, opacity: 0.8 });
-    const starField = new THREE.Points(geometry, material);
-    scene.add(starField);
+    // 4. 控制器
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxDistance = 300;
+    controls.minDistance = 10;
+
+    // 5. 灯光
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6); // 环境光
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.PointLight(0xffffff, 1.5, 300); // 太阳点光源
+    sunLight.position.set(0, 0, 0);
+    scene.add(sunLight);
+
+    // 6. 创建对象
+    createStars();
+    createSun();
+    createPlanets();
+
+    // 7. 事件监听
+    window.addEventListener('resize', onWindowResize, false);
+    renderer.domElement.addEventListener('pointerdown', onMouseDown, false);
+    renderer.domElement.addEventListener('pointerup', onMouseUp, false);
+    
+    // UI 事件
+    document.getElementById('search-btn').addEventListener('click', performSearch);
+    document.getElementById('search-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') performSearch(); });
+    document.getElementById('hide-search-btn').addEventListener('click', toggleSearch);
+    document.getElementById('close-panel').addEventListener('click', clearFocus);
+    document.getElementById('lang-btn').addEventListener('click', toggleLang);
+
+    // 启动循环
+    animate();
+    updateClock();
+    setInterval(updateClock, 1000);
 }
-createStarfield();
 
-// 灯光
-const ambientLight = new THREE.AmbientLight(0x333333); // 环境光
-scene.add(ambientLight);
-
-const sunLight = new THREE.PointLight(0xFFFFFF, 2, 400); // 太阳光
-sunLight.position.set(0, 0, 0);
-scene.add(sunLight);
+// =================创建场景物体=================
 
 // 纹理加载器
 const textureLoader = new THREE.TextureLoader();
 
-// 辅助函数：创建备用纹理（如果图片加载失败，生成带颜色的Canvas）
-function createFallbackTexture(colorHex) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 64; canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#' + new THREE.Color(colorHex).getHexString();
-    ctx.fillRect(0,0,64,64);
-    // 加一点噪点模拟纹理
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-    ctx.font = "12px Arial";
-    ctx.fillText("Texture", 5, 30);
-    return new THREE.CanvasTexture(canvas);
+function createStars() {
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 5000;
+    const posArray = new Float32Array(starCount * 3);
+    for(let i=0; i<starCount * 3; i++) {
+        posArray[i] = (Math.random() - 0.5) * 600;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    const starMat = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.5,
+        transparent: true,
+        opacity: 0.8
+    });
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
 }
 
-// ================= 3. 构建太阳系 (Build Solar System) =================
-const planetMeshes = []; // 存储行星网格以便交互
-const orbitLines = [];   // 存储轨道
+function createSun() {
+    // 太阳本体
+    const geometry = new THREE.SphereGeometry(8, 64, 64);
+    const texture = textureLoader.load(TEXTURES.sun);
+    const material = new THREE.MeshBasicMaterial({ 
+        map: texture, 
+        color: 0xffff00 // 纹理加载失败时的后备颜色
+    });
+    sun = new THREE.Mesh(geometry, material);
+    scene.add(sun);
 
-PLANETS.forEach(data => {
-    // 1. 创建轨道 (Orbit)
-    if (data.distance > 0) {
-        const orbitGeometry = new THREE.RingGeometry(data.distance - 0.2, data.distance + 0.2, 128);
-        const orbitMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.1 
-        });
-        const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
-        orbit.rotation.x = -Math.PI / 2;
+    // 太阳光晕 (Sprite)
+    const spriteMaterial = new THREE.SpriteMaterial({ 
+        map: textureLoader.load('https://threejs.org/examples/textures/sprites/glow.png'), 
+        color: 0xffaa00, 
+        transparent: true, 
+        blending: THREE.AdditiveBlending 
+    });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(30, 30, 1.0);
+    sun.add(sprite); // 添加到太阳对象中
+}
+
+function createPlanets() {
+    PLANET_DATA.forEach(data => {
+        // 1. 创建轨道线
+        const orbitCurve = new THREE.EllipseCurve(0, 0, data.distance, data.distance, 0, 2 * Math.PI, false, 0);
+        const points = orbitCurve.getPoints(128);
+        const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
+        const orbitMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 });
+        const orbit = new THREE.LineLoop(orbitGeo, orbitMat);
+        orbit.rotation.x = Math.PI / 2;
         scene.add(orbit);
-        orbitLines.push(orbit);
-    }
+        orbits.push(orbit);
 
-    // 2. 创建行星组 (Group for rotation center)
-    const planetGroup = new THREE.Group();
-    scene.add(planetGroup);
+        // 2. 创建行星组（用于自转和公转）
+        const planetGroup = new THREE.Group();
+        // 初始位置
+        const startAngle = Math.random() * Math.PI * 2;
+        planetGroup.userData = { angle: startAngle, distance: data.distance, speed: data.speed, info: data };
+        planetGroup.position.set(Math.cos(startAngle) * data.distance, 0, Math.sin(startAngle) * data.distance);
+        scene.add(planetGroup);
 
-    // 3. 创建行星本体
-    const geometry = new THREE.SphereGeometry(data.radius, 64, 64);
-    let material;
-
-    if (data.key === 'sun') {
-        // 太阳特殊处理：发光
-        material = new THREE.MeshBasicMaterial({ color: 0xFF9900 });
-        // 添加光晕
-        const spriteMat = new THREE.SpriteMaterial({ 
-            map: textureLoader.load('https://threejs.org/examples/textures/sprites/glow.png'), 
-            color: 0xFF8800, transparent: true, blending: THREE.AdditiveBlending 
-        });
-        const sprite = new THREE.Sprite(spriteMat);
-        sprite.scale.set(60, 60, 1.0);
-        planetGroup.add(sprite);
-    } else {
-        // 普通行星
-        material = new THREE.MeshStandardMaterial({
-            roughness: 0.7,
-            metalness: 0.1,
-            color: data.color // 基础底色，防止纹理未加载时黑屏
-        });
+        // 3. 行星网格
+        const geometry = new THREE.SphereGeometry(data.radius, 32, 32);
         
-        // 加载纹理
-        textureLoader.load(data.texture, (tex) => {
-            material.map = tex;
-            material.needsUpdate = true;
-        }, undefined, () => {
-            // Error fallback
-            console.log(`Failed to load texture for ${data.key}`);
-            material.map = createFallbackTexture(data.color);
+        let material;
+        // 尝试加载纹理，如果失败显示颜色
+        textureLoader.load(data.texture, 
+            (tex) => { material.map = tex; material.needsUpdate = true; },
+            undefined,
+            (err) => { console.log("Texture load failed, using color"); }
+        );
+
+        material = new THREE.MeshStandardMaterial({
+            color: data.color, // 底色
+            roughness: 0.7,
+            metalness: 0.1
         });
-    }
 
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.x = data.distance; // 初始位置
-    mesh.userData = data; // 绑定数据
-    
-    // 添加一个不可见的点击热区（比星球略大），方便手机点击
-    const hitboxGeo = new THREE.SphereGeometry(data.radius * 1.5, 16, 16);
-    const hitboxMat = new THREE.MeshBasicMaterial({ visible: false });
-    const hitbox = new THREE.Mesh(hitboxGeo, hitboxMat);
-    mesh.add(hitbox);
-    
-    // 土星环
-    if (data.hasRing) {
-        const ringGeo = new THREE.RingGeometry(data.radius * 1.4, data.radius * 2.2, 64);
-        const ringMat = new THREE.MeshBasicMaterial({ 
-            color: 0xC5AB6E, side: THREE.DoubleSide, transparent: true, opacity: 0.6 
-        });
-        const ring = new THREE.Mesh(ringGeo, ringMat);
-        ring.rotation.x = -Math.PI / 2; // 水平放置，但因为被加到了mesh（球体）上，需要调整
-        // 修正：环应该加在mesh内部或group内部，这里为了简单加在mesh上并旋转mesh
-        // 更好的方式：将环加在mesh里，让环相对于球体倾斜
-        ring.rotation.x = Math.PI / 2;
-        mesh.add(ring);
-        mesh.rotation.z = Math.PI / 6; // 整体倾斜一点
-    }
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.userData = { isPlanet: true, parentGroup: planetGroup }; // 标记用于点击检测
+        planetGroup.add(mesh);
+        planets.push(planetGroup);
 
-    planetGroup.add(mesh);
-    planetMeshes.push(mesh);
-    
-    // 存储引用用于动画
-    data.mesh = mesh;
-    data.group = planetGroup;
-    data.angle = Math.random() * Math.PI * 2; // 随机初始角度
-});
+        // 4. 土星环特例
+        if (data.hasRing) {
+            const ringGeo = new THREE.RingGeometry(data.radius * 1.4, data.radius * 2.2, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xaa9977, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            planetGroup.add(ring);
+        }
+    });
+}
 
-// ================= 4. 动画循环 (Animation Loop) =================
-let isFocused = false; // 是否处于聚焦模式
-
-function animate(time) {
+// =================动画循环=================
+function animate() {
     requestAnimationFrame(animate);
-    TWEEN.update(time);
-    controls.update();
 
-    // 只有在非聚焦模式下，才进行公转
-    if (!isFocused) {
-        PLANETS.forEach(p => {
-            if (p.speed > 0) {
-                p.angle += p.speed * 0.5; // 速度调整
-                p.mesh.position.x = Math.cos(p.angle) * p.distance;
-                p.mesh.position.z = Math.sin(p.angle) * p.distance;
-                // 自转
-                p.mesh.rotation.y += 0.005;
-            }
+    // 太阳自转
+    if(sun) sun.rotation.y += 0.002;
+
+    // 行星公转与自转
+    if (!isFocusing) { // 聚焦时不公转，方便观察
+        planets.forEach(p => {
+            p.userData.angle += p.userData.speed * CONFIG.orbitSpeedMultiplier;
+            p.position.x = Math.cos(p.userData.angle) * p.userData.distance;
+            p.position.z = Math.sin(p.userData.angle) * p.userData.distance;
+            
+            // 行星自转
+            p.children[0].rotation.y += 0.01;
         });
-    } else {
-         // 聚焦模式下仅保留自转，增加观赏性
-         PLANETS.forEach(p => {
-             if(p.mesh) p.mesh.rotation.y += 0.002;
-         });
+    } else if (currentFocusPlanet) {
+        // 聚焦时仅自转
+        currentFocusPlanet.children[0].rotation.y += 0.005;
+        
+        // 相机跟随（可选：如果希望镜头一直锁定即使公转也行，这里简单处理为暂停公转）
     }
 
+    controls.update();
     renderer.render(scene, camera);
 }
 
-// ================= 5. 交互逻辑 (Interactions) =================
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
+// =================交互逻辑=================
 
-// 点击事件处理
+// 点击处理（区别拖拽和点击）
+let mouseDownTime = 0;
+let mouseDownPos = new THREE.Vector2();
+
+function onMouseDown(event) {
+    mouseDownTime = Date.now();
+    mouseDownPos.set(event.clientX, event.clientY);
+}
+
+function onMouseUp(event) {
+    const timeDiff = Date.now() - mouseDownTime;
+    const distDiff = Math.abs(event.clientX - mouseDownPos.x) + Math.abs(event.clientY - mouseDownPos.y);
+
+    // 如果按下时间短且移动距离小，视为点击
+    if (timeDiff < 300 && distDiff < 5) {
+        onMouseClick(event);
+    }
+}
+
 function onMouseClick(event) {
-    // 计算鼠标坐标
+    // 归一化设备坐标
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
 
-    // 允许检测 Hitbox 和 Planet Mesh
+    // 检测相交物体 (递归检测)
     const intersects = raycaster.intersectObjects(scene.children, true);
 
-    // 过滤掉 Starfield 和 Orbit Lines
-    const target = intersects.find(hit => hit.object.geometry.type === 'SphereGeometry' && hit.object !== scene);
-
-    if (target) {
-        // 找到所属的行星 Mesh (可能是 Hitbox，所以找父级或自己)
-        let planetMesh = target.object;
-        if (!planetMesh.userData.key && planetMesh.parent.userData.key) {
-            planetMesh = planetMesh.parent;
-        }
-
-        if (planetMesh.userData.key) {
-            focusOnPlanet(planetMesh);
+    if (intersects.length > 0) {
+        // 找到第一个是行星的对象
+        const target = intersects.find(obj => obj.object.userData.isPlanet);
+        if (target) {
+            focusOnPlanet(target.object.userData.parentGroup);
+        } else {
+            // 点击空白处，如果当前在聚焦，则退出
+            if (isFocusing) clearFocus();
         }
     } else {
-        // 点击空白处，如果已聚焦则还原
-        if (isFocused && !event.target.closest('.side-panel') && !event.target.closest('.top-bar') && !event.target.closest('#search-container')) {
-            resetView();
-        }
+        if (isFocusing) clearFocus();
     }
 }
 
-// 聚焦行星逻辑
-function focusOnPlanet(mesh) {
-    if (isFocused && currentFocus === mesh) return;
-    isFocused = true;
-    currentFocus = mesh;
-
-    const data = mesh.userData;
+function focusOnPlanet(planetGroup) {
+    isFocusing = true;
+    currentFocusPlanet = planetGroup;
     
-    // 1. 停止公转动画 (在 animate 中通过 isFocused 标志控制)
-
-    // 2. 计算相机目标位置
-    // 我们希望行星在屏幕左下角。
-    // 在 3D 世界中，这意味相机要看向行星，但位置要偏右上方。
+    const data = planetGroup.userData.info;
+    const isMobile = window.innerWidth < 768;
     
-    const offsetDistance = data.radius * 4; // 距离行星多远
-    const targetPos = new THREE.Vector3();
-    mesh.getWorldPosition(targetPos); // 获取行星当前世界坐标
-
-    const cameraEndPos = {
-        x: targetPos.x + offsetDistance, 
-        y: targetPos.y + offsetDistance * 0.5, 
-        z: targetPos.z + offsetDistance
-    };
-
-    // 使用 Tween 平滑移动相机
-    new TWEEN.Tween(camera.position)
-        .to(cameraEndPos, 1500)
-        .easing(TWEEN.Easing.Cubic.Out)
-        .start();
-
-    // 同时平滑移动控制器的聚焦点
-    new TWEEN.Tween(controls.target)
-        .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 1500)
-        .easing(TWEEN.Easing.Cubic.Out)
-        .start();
-
-    // 3. 显示 UI 信息
-    showInfoPanel(data);
+    // 计算目标位置
+    // 我们希望相机在行星附近，稍微偏移，使得行星在屏幕左下角（或移动端的中心）
+    // 简单做法：相机看向行星中心，但通过 offset 调整相机位置
+    const offset = isMobile ? CONFIG.mobileFocusOffset : CONFIG.focusOffset;
     
-    // 隐藏搜索框
-    document.getElementById('search-container').classList.add('hidden-search');
-}
+    // 目标相机位置（相对于行星的世界坐标）
+    const targetPos = new THREE.Vector3(
+        planetGroup.position.x + offset.x,
+        planetGroup.position.y + offset.y,
+        planetGroup.position.z + offset.z
+    );
 
-// 还原视图逻辑
-let currentFocus = null;
-function resetView() {
-    isFocused = false;
-    currentFocus = null;
-
-    // 还原相机位置
-    new TWEEN.Tween(camera.position)
-        .to({ x: 0, y: 80, z: 150 }, 1500)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
-
-    new TWEEN.Tween(controls.target)
-        .to({ x: 0, y: 0, z: 0 }, 1500)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
-
-    hideInfoPanel();
-    document.getElementById('search-container').classList.remove('hidden-search');
-}
-
-// ================= 6. UI 更新 (DOM Updates) =================
-const infoPanel = document.getElementById('info-panel');
-const titleEl = document.getElementById('planet-name');
-const descEl = document.getElementById('planet-desc');
-const wikiBtn = document.getElementById('wiki-btn');
-
-function showInfoPanel(data) {
-    infoPanel.classList.remove('hidden');
-    
-    // 更新文本
-    updateLanguageUI(); // 确保是当前语言
-    
-    // 动态值
-    document.getElementById('val-radius').innerText = data.radius * 1000 + " km (Scale)";
-    document.getElementById('val-temp').innerText = data.temp;
-    document.getElementById('val-orbit').innerText = data.orbitPeriod;
-    
-    // 简介与维基链接
-    const isZh = SYSTEM_CONFIG.lang === 'zh';
-    titleEl.innerText = isZh ? TEXTS.zh[data.key] : TEXTS.en[data.key]; // 名字映射
-    descEl.innerText = isZh ? data.desc_zh : data.desc_en;
-    wikiBtn.href = `https://${isZh?'zh':'en'}.wikipedia.org/wiki/${data.key}`;
-    
-    // 模拟图片预览 (使用Canvas截取当前渲染不太稳定，直接用CSS背景色或占位图)
-    const imgDiv = document.getElementById('planet-img-view');
-    imgDiv.style.backgroundColor = '#' + new THREE.Color(data.color).getHexString();
-}
-
-function hideInfoPanel() {
-    infoPanel.classList.add('hidden');
-}
-
-// 语言切换
-function updateLanguageUI() {
-    const isZh = SYSTEM_CONFIG.lang === 'zh';
-    const t = isZh ? TEXTS.zh : TEXTS.en;
-
-    document.getElementById('lang-btn').innerText = isZh ? "English" : "中文";
-    document.getElementById('search-input').placeholder = t.searchPlaceholder;
-    document.getElementById('wiki-btn').innerText = t.wiki;
-    
-    // 更新 Panel Labels
-    document.querySelectorAll('.label').forEach(el => {
-        const key = el.getAttribute('data-key');
-        if(t[key]) el.innerText = t[key];
+    // 1. 移动相机
+    gsap.to(camera.position, {
+        duration: 1.5,
+        x: targetPos.x,
+        y: targetPos.y,
+        z: targetPos.z,
+        ease: "power2.inOut",
+        onUpdate: () => {
+             // 在动画过程中保持看向行星，或者稍微偏一点使得行星不在正中心
+             controls.target.copy(planetGroup.position);
+        }
     });
 
-    // 如果面板打开中，实时更新当前行星信息
-    if (isFocused && currentFocus) {
-        const data = currentFocus.userData;
-        titleEl.innerText = isZh ? TEXTS.zh[data.key] : TEXTS.en[data.key];
-        descEl.innerText = isZh ? data.desc_zh : data.desc_en;
-        wikiBtn.href = `https://${isZh?'zh':'en'}.wikipedia.org/wiki/${data.key}`;
+    // 2. 锁定控制器中心
+    gsap.to(controls.target, {
+        duration: 1.5,
+        x: planetGroup.position.x,
+        y: planetGroup.position.y,
+        z: planetGroup.position.z,
+        ease: "power2.inOut"
+    });
+
+    // 3. 显示 UI
+    updateInfoPanel(data);
+    document.getElementById('info-panel').classList.remove('hidden');
+    document.getElementById('search-container').classList.add('hidden-ui');
+}
+
+function clearFocus() {
+    if (!isFocusing) return;
+    isFocusing = false;
+    currentFocusPlanet = null;
+
+    // 恢复相机到概览视角
+    gsap.to(camera.position, {
+        duration: 1.5,
+        x: 0, 
+        y: 60, 
+        z: CONFIG.cameraZ,
+        ease: "power2.inOut"
+    });
+
+    gsap.to(controls.target, {
+        duration: 1.5,
+        x: 0, y: 0, z: 0,
+        ease: "power2.inOut"
+    });
+
+    document.getElementById('info-panel').classList.add('hidden');
+    document.getElementById('search-container').classList.remove('hidden-ui');
+}
+
+// =================UI & 工具函数=================
+
+function updateInfoPanel(data) {
+    const isCN = lang === 'zh';
+    document.getElementById('planet-name').innerText = isCN ? data.nameCN : data.name;
+    document.getElementById('planet-desc').innerText = isCN ? data.descCN : data.desc;
+    
+    document.getElementById('val-radius').innerText = data.realData.r;
+    document.getElementById('val-temp').innerText = data.realData.t;
+    document.getElementById('val-orbit').innerText = data.realData.o;
+    
+    const wikiUrl = `https://${isCN ? 'zh' : 'en'}.wikipedia.org/wiki/${data.name}`;
+    document.getElementById('wiki-btn').href = wikiUrl;
+}
+
+function toggleLang() {
+    lang = lang === 'zh' ? 'en' : 'zh';
+    // 更新按钮文字
+    document.getElementById('lang-btn').innerText = lang === 'zh' ? 'EN / 中' : 'CN / 英';
+    
+    // 更新当前显示的面板
+    if (isFocusing && currentFocusPlanet) {
+        updateInfoPanel(currentFocusPlanet.userData.info);
+    }
+    
+    // 更新静态文本
+    const tips = {
+        'zh': "双击聚焦行星 / 拖拽旋转视角",
+        'en': "Double click to focus / Drag to rotate"
+    };
+    document.querySelector('#footer-tip span').innerText = tips[lang];
+    
+    const searchPH = {
+        'zh': "必应搜索...",
+        'en': "Bing Search..."
+    };
+    document.getElementById('search-input').placeholder = searchPH[lang];
+}
+
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function performSearch() {
+    const query = document.getElementById('search-input').value;
+    if (query) {
+        window.open(`https://www.bing.com/search?q=${encodeURIComponent(query)}`, '_blank');
     }
 }
 
-// ================= 7. 事件监听 (Event Listeners) =================
+function toggleSearch() {
+    const box = document.querySelector('.search-box');
+    const isHidden = box.style.opacity === '0';
+    box.style.opacity = isHidden ? '1' : '0';
+    box.style.pointerEvents = isHidden ? 'auto' : 'none';
+}
 
-// 窗口大小调整
-window.addEventListener('resize', () => {
+function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-});
+}
 
-// 鼠标/触摸点击
-window.addEventListener('mousedown', (e) => {
-    // 简单的区分拖拽和点击
-    window.mouseStart = { x: e.clientX, y: e.clientY };
-});
-window.addEventListener('mouseup', (e) => {
-    const dx = e.clientX - window.mouseStart.x;
-    const dy = e.clientY - window.mouseStart.y;
-    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) {
-        onMouseClick(e);
-    }
-});
-// 移动端触摸支持
-window.addEventListener('touchstart', (e) => {
-    if(e.touches.length === 1) {
-        window.touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }
-});
-window.addEventListener('touchend', (e) => {
-    if(!window.touchStart) return;
-    const dx = e.changedTouches[0].clientX - window.touchStart.x;
-    const dy = e.changedTouches[0].clientY - window.touchStart.y;
-    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-        // 构造伪造的 event 对象传递给 onMouseClick
-        onMouseClick({
-            clientX: e.changedTouches[0].clientX,
-            clientY: e.changedTouches[0].clientY,
-            target: e.target
-        });
-    }
-});
-
-// 搜索功能
-document.getElementById('search-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        const val = e.target.value;
-        if (val) window.open(`https://www.bing.com/search?q=${encodeURIComponent(val)}`, '_blank');
-    }
-});
-
-// 显隐搜索框
-document.getElementById('toggle-search-btn').addEventListener('click', () => {
-    document.getElementById('search-container').classList.toggle('hidden-search');
-});
-
-// 关闭详情页
-document.getElementById('close-info-btn').addEventListener('click', resetView);
-
-// 语言切换
-document.getElementById('lang-btn').addEventListener('click', () => {
-    SYSTEM_CONFIG.lang = SYSTEM_CONFIG.lang === 'zh' ? 'en' : 'zh';
-    updateLanguageUI();
-});
-
-// 时钟
-setInterval(() => {
-    const now = new Date();
-    document.getElementById('clock').innerText = now.toLocaleTimeString();
-}, 1000);
-
-// 移除 Loading
-window.onload = () => {
-    setTimeout(() => {
-        document.getElementById('loading-overlay').style.opacity = 0;
-        setTimeout(() => document.getElementById('loading-overlay').remove(), 500);
-    }, 1000); // 假装加载一会，给纹理一点时间
-    animate();
-};
+// 启动
+init();

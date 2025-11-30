@@ -1,152 +1,268 @@
 :root {
-    --glass-bg: rgba(20, 20, 30, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-bg: rgba(20, 20, 30, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --highlight: #00d2ff;
     --text-main: #ffffff;
-    --text-sec: #aaaaaa;
-    --accent: #4facfe;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+* {
+    box-sizing: border-box;
+    user-select: none; /* 防止文本被选中干扰拖拽 */
+}
 
 body {
+    margin: 0;
     overflow: hidden;
     background-color: #000;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     color: var(--text-main);
 }
 
+/* 画布全屏 */
 #canvas-container {
     position: absolute;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    z-index: 0;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
 }
 
 /* 通用毛玻璃类 */
-.glass-panel, .glass-btn {
+.glass {
     background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-    color: white;
 }
 
 /* 顶部栏 */
-.top-bar {
+#top-bar {
     position: absolute;
-    top: 20px; left: 20px; right: 20px;
+    top: 20px;
+    left: 20px;
+    right: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    pointer-events: none; /* 让鼠标能穿透空白区域操作3D */
     z-index: 10;
+    pointer-events: none; /* 让鼠标能穿透空白区域 */
 }
 
-.top-bar > * { pointer-events: auto; }
+#top-bar > * {
+    pointer-events: auto;
+}
 
-#clock { font-size: 1.2rem; font-weight: 300; letter-spacing: 1px; text-shadow: 0 0 10px black;}
+.time-display {
+    font-size: 1.2rem;
+    font-weight: 300;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
 
-.glass-btn {
-    padding: 8px 16px;
+#lang-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
     cursor: pointer;
     transition: 0.3s;
-    outline: none;
 }
-.glass-btn:hover { background: rgba(255,255,255,0.15); }
 
-/* 搜索框 */
-.centered {
-    position: absolute;
-    top: 15%; left: 50%;
-    transform: translateX(-50%);
-    padding: 10px 20px;
-    width: 90%;
-    max-width: 500px;
-    transition: all 0.5s ease;
-    z-index: 10;
+#lang-btn:hover {
+    background: rgba(255,255,255,0.3);
 }
-.centered.hidden-search {
+
+/* 居中搜索框 */
+#search-container {
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: opacity 0.5s, top 0.5s;
+}
+
+#search-container.hidden-ui {
     opacity: 0;
     pointer-events: none;
-    transform: translate(-50%, -20px);
+}
+
+.search-box {
+    display: flex;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+    padding: 5px 10px;
+    width: 300px;
+    transition: width 0.3s;
+}
+
+.search-box:focus-within {
+    width: 400px;
+    background: rgba(0, 0, 0, 0.6);
+    border-color: var(--highlight);
 }
 
 #search-input {
-    width: 100%;
     background: transparent;
     border: none;
     color: white;
-    font-size: 1.2rem;
+    flex: 1;
+    padding: 10px;
     outline: none;
-    text-align: center;
+    font-size: 1rem;
 }
-#search-input::placeholder { color: rgba(255,255,255,0.5); }
+
+#search-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.toggle-search {
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 1.2rem;
+}
 
 /* 右侧信息面板 */
-.side-panel {
+#info-panel {
     position: absolute;
-    top: 0; right: 0;
+    top: 10%;
+    right: 5%;
     width: 350px;
-    height: 100vh;
-    border-radius: 0; /* 贴边 */
-    border-left: 1px solid var(--glass-border);
-    border-right: none; border-top: none; border-bottom: none;
-    transform: translateX(0);
-    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    max-height: 80vh;
+    background: rgba(10, 10, 20, 0.75);
+    backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 25px;
     z-index: 20;
-    display: flex;
-    flex-direction: column;
-    padding: 30px;
+    color: white;
+    transform: translateX(0);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s;
     overflow-y: auto;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.5);
 }
 
-.side-panel.hidden { transform: translateX(100%); }
+#info-panel.hidden {
+    transform: translateX(120%);
+    opacity: 0;
+    pointer-events: none;
+}
 
-#close-info-btn {
+#close-panel {
     position: absolute;
-    top: 20px; right: 20px;
-    background: transparent;
+    top: 10px;
+    right: 15px;
+    background: none;
     border: none;
-    color: white;
-    font-size: 2rem;
+    color: rgba(255,255,255,0.5);
+    font-size: 1.5rem;
     cursor: pointer;
 }
 
-.content h1 { font-size: 2.5rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;}
-.content .desc { font-size: 0.95rem; line-height: 1.6; color: #ddd; margin-bottom: 20px; }
+#close-panel:hover {
+    color: white;
+}
 
-.data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
-.data-item { display: flex; flex-direction: column; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;}
-.data-item .label { font-size: 0.75rem; color: var(--text-sec); text-transform: uppercase;}
-.data-item .value { font-size: 1rem; font-weight: bold; margin-top: 5px;}
+#planet-name {
+    margin-top: 0;
+    font-size: 2.5rem;
+    font-weight: 100;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 10px;
+    letter-spacing: 2px;
+}
 
-.action-btn {
+#planet-desc {
+    line-height: 1.6;
+    font-size: 0.95rem;
+    color: #ddd;
+    margin: 15px 0;
+}
+
+.data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.data-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.data-item .label {
+    font-size: 0.8rem;
+    color: #888;
+    text-transform: uppercase;
+}
+
+.data-item .value {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.wiki-button {
     display: block;
     text-align: center;
-    background: var(--accent);
+    background: linear-gradient(45deg, #00d2ff, #3a7bd5);
     color: white;
-    padding: 12px;
     text-decoration: none;
-    border-radius: 6px;
+    padding: 12px;
+    border-radius: 5px;
     font-weight: bold;
-    transition: 0.3s;
+    transition: transform 0.2s;
 }
-.action-btn:hover { background: #3b8ddb; box-shadow: 0 0 15px var(--accent); }
+
+.wiki-button:hover {
+    transform: scale(1.02);
+}
+
+/* 底部提示 */
+#footer-tip {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.8rem;
+    pointer-events: none;
+    z-index: 5;
+}
 
 /* 移动端适配 */
 @media (max-width: 768px) {
-    .side-panel { width: 100%; height: 50vh; top: auto; bottom: 0; border-radius: 20px 20px 0 0; border-top: 1px solid var(--glass-border); transform: translateY(0); }
-    .side-panel.hidden { transform: translateY(100%); }
-    .centered { top: 12%; }
+    #info-panel {
+        top: auto;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        max-height: 50vh;
+        border-radius: 20px 20px 0 0;
+        transform: translateY(0);
+    }
+    #info-panel.hidden {
+        transform: translateY(110%);
+    }
+    .search-box {
+        width: 200px;
+    }
+    .search-box:focus-within {
+        width: 280px;
+    }
+    #planet-name {
+        font-size: 1.8rem;
+    }
 }
-
-/* Loading */
-#loading-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: #000; z-index: 999;
-    display: flex; justify-content: center; align-items: center;
-    transition: opacity 0.5s;
-}
-.loader { color: var(--accent); font-family: monospace; animation: pulse 1s infinite; }
-@keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
